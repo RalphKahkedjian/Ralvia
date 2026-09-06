@@ -22,7 +22,10 @@ class HistoricalInvoiceSeeder extends Seeder
         |
         */
 
-        $user = User::latest('id')->firstOrFail();
+        $user = User::where(
+    'email',
+    'lee@gmail.com'
+)->firstOrFail();
 
         $company = $user->company;
 
