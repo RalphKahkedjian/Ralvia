@@ -1,28 +1,18 @@
-import { cookies } from "next/headers";
-
 import type {
   RiskIntelligenceResponse,
 } from "@/types/risk-intelligence";
 
+import { getServerAuthHeaders } from "@/lib/api/serverAuth";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL;
-
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function getRiskIntelligence():
   Promise<RiskIntelligenceResponse> {
 
-  const cookieStore = await cookies();
-
   const response = await fetch(
     `${API_URL}/ml/risk/intelligence`,
     {
-      headers: {
-        Accept: "application/json",
-        Cookie: cookieStore.toString(),
-        Origin: "http://localhost:3000",
-        Referer: "http://localhost:3000/",
-      },
+      headers: await getServerAuthHeaders(),
       cache: "no-store",
     }
   );
