@@ -1,32 +1,72 @@
-backend:
-  name: Laravel API
-  runs-on: ubuntu-latest
+name: Ralvia CI
 
-  defaults:
-    run:
-      working-directory: ralvia-api
+on:
+  push:
+    branches:
+      - main
 
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+  pull_request:
+    branches:
+      - main
 
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: "8.3"
-        extensions: mbstring, pdo, pdo_sqlite
-        coverage: none
+jobs:
+  frontend:
+    name: Next.js Frontend
+    runs-on: ubuntu-latest
 
-    - name: Install Composer dependencies
-      run: composer install --prefer-dist --no-progress --no-interaction
+    defaults:
+      run:
+        working-directory: ralvia
 
-    - name: Prepare Laravel environment
-      run: |
-        cp .env.example .env
-        php artisan key:generate
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Run Laravel tests
-      env:
-        DB_CONNECTION: sqlite
-        DB_DATABASE: ":memory:"
-      run: php artisan test
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ralvia/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Build Next.js
+        run: npm run build
+
+  backend:
+    name: Laravel API
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ralvia-api
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, pdo, pdo_sqlite
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Prepare Laravel environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run Laravel tests
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
+        run: php artisan test
