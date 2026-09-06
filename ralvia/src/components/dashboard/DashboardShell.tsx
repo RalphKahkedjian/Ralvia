@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 
 type Props = {
   nav: React.ReactNode;
@@ -9,22 +8,33 @@ type Props = {
   children: React.ReactNode;
 };
 
-export default function DashboardShell({ nav, logout, children }: Props) {
+export default function DashboardShell({
+  nav,
+  logout,
+  children,
+}: Props) {
   const [open, setOpen] = useState(false);
-  const pathname = usePathname();
 
-  // Close the mobile menu whenever the route changes
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
-
-  // Prevent background scroll while the mobile menu is open
+  // Prevent background scrolling while the mobile menu is open
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
+
     return () => {
       document.body.style.overflow = "";
     };
   }, [open]);
+
+  function handleMobileNavigation(
+    event: React.MouseEvent<HTMLDivElement>
+  ) {
+    const target = event.target as HTMLElement;
+
+    const clickableElement = target.closest("a, button");
+
+    if (clickableElement) {
+      setOpen(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#FBFAF8]">
@@ -104,15 +114,24 @@ export default function DashboardShell({ nav, logout, children }: Props) {
           </div>
 
           <div className="flex flex-1 flex-col justify-between overflow-y-auto px-5 pb-7">
-            <div className="w-full">{nav}</div>
+            <div
+              className="w-full"
+              onClick={handleMobileNavigation}
+            >
+              {nav}
+            </div>
 
-            <div className="w-full border-t border-white/10 pt-5 text-left">
+            <div
+              className="w-full border-t border-white/10 pt-5 text-left"
+              onClick={handleMobileNavigation}
+            >
               {logout}
             </div>
           </div>
         </div>
       )}
 
+      {/* Main content */}
       <main className="min-h-screen px-6 py-8 md:ml-64 md:px-10 md:py-10">
         {children}
       </main>

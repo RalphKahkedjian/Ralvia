@@ -10,6 +10,34 @@ import { apiFetch } from "@/lib/api/client";
 
 type Language = "en" | "ar";
 
+type SpeechRecognitionEventLike = {
+  results: {
+    [index: number]: {
+      [index: number]: {
+        transcript: string;
+      };
+    };
+  };
+};
+
+type SpeechRecognitionInstance = {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  onstart: (() => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+};
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
+
+type SpeechRecognitionWindow = Window & {
+  SpeechRecognition?: SpeechRecognitionConstructor;
+  webkitSpeechRecognition?: SpeechRecognitionConstructor;
+};
+
 type CustomerActionData = {
   name: string;
   email: string | null;
@@ -358,66 +386,66 @@ export default function FinanceChat() {
   }
 
   function startListening() {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any)
-        .webkitSpeechRecognition;
+  const speechWindow = window as SpeechRecognitionWindow;
 
-    if (!SpeechRecognition) {
-      setError(
-        "Voice input is not supported in this browser."
-      );
+  const SpeechRecognition =
+    speechWindow.SpeechRecognition ??
+    speechWindow.webkitSpeechRecognition;
 
-      return;
-    }
+  if (!SpeechRecognition) {
+    setError(
+      "Voice input is not supported in this browser."
+    );
 
-    window.speechSynthesis.cancel();
-    setSpeaking(false);
-
-    const recognition =
-      new SpeechRecognition();
-
-    recognition.lang =
-      language === "ar"
-        ? "ar-SA"
-        : "en-US";
-
-    recognition.interimResults = false;
-    recognition.continuous = false;
-
-    recognition.onstart = () => {
-      setListening(true);
-      setError("");
-    };
-
-    recognition.onresult = async (
-      event: any
-    ) => {
-      const transcript =
-        event.results[0][0].transcript;
-
-      setListening(false);
-
-      await submitQuestion(
-        transcript,
-        true
-      );
-    };
-
-    recognition.onerror = () => {
-      setListening(false);
-
-      setError(
-        "Could not understand the voice input."
-      );
-    };
-
-    recognition.onend = () => {
-      setListening(false);
-    };
-
-    recognition.start();
+    return;
   }
+
+  window.speechSynthesis.cancel();
+  setSpeaking(false);
+
+  const recognition = new SpeechRecognition();
+
+  recognition.lang =
+    language === "ar"
+      ? "ar-SA"
+      : "en-US";
+
+  recognition.interimResults = false;
+  recognition.continuous = false;
+
+  recognition.onstart = () => {
+    setListening(true);
+    setError("");
+  };
+
+  recognition.onresult = async (
+    event: SpeechRecognitionEventLike
+  ) => {
+    const transcript =
+      event.results[0][0].transcript;
+
+    setListening(false);
+
+    await submitQuestion(
+      transcript,
+      true
+    );
+  };
+
+  recognition.onerror = () => {
+    setListening(false);
+
+    setError(
+      "Could not understand the voice input."
+    );
+  };
+
+  recognition.onend = () => {
+    setListening(false);
+  };
+
+  recognition.start();
+}
 
   function speakAnswer(
     text: string,

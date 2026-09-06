@@ -18,7 +18,7 @@ export default function AlertsPanel({ alerts }: Props) {
         </p>
 
         <p className="mt-1 text-sm text-gray-500">
-          Ralvia hasn't detected anything requiring immediate attention.
+          Ralvia hasn&apos;t detected anything requiring immediate attention.
         </p>
       </div>
     );
