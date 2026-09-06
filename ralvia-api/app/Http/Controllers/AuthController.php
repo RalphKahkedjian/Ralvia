@@ -35,6 +35,12 @@ public function register(Request $request)
         ]);
     });
 
+    // Log the newly registered user in
+    Auth::guard('web')->login($user);
+
+    // Create a fresh authenticated session
+    $request->session()->regenerate();
+
     return response()->json([
         'message' => 'User registered successfully',
         'user' => $user,
