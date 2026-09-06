@@ -6,6 +6,8 @@ import DashboardNav from "@/components/dashboard/DashboardNav";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+const FRONTEND_URL =
+  process.env.FRONTEND_URL ?? "http://localhost:3000";
 
 export default async function DashboardLayout({
   children,
@@ -23,8 +25,8 @@ export default async function DashboardLayout({
     headers: {
       Accept: "application/json",
       Cookie: cookieHeader,
-      Origin: "http://localhost:3000",
-      Referer: "http://localhost:3000/",
+      Origin: FRONTEND_URL,
+      Referer: `${FRONTEND_URL}/`,
     },
     cache: "no-store",
   });

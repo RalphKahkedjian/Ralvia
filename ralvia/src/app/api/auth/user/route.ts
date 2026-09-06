@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+const FRONTEND_URL =
+  process.env.FRONTEND_URL ?? "http://localhost:3000";
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -15,10 +17,8 @@ export async function GET() {
     headers: {
       Accept: "application/json",
       Cookie: cookieHeader,
-
-      // Important for Laravel Sanctum
-      Origin: "http://localhost:3000",
-      Referer: "http://localhost:3000/",
+      Origin: FRONTEND_URL,
+      Referer: `${FRONTEND_URL}/`,
     },
     cache: "no-store",
   });
