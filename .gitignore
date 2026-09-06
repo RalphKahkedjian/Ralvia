@@ -8,6 +8,9 @@
 # ==============================
 # Next.js / Node
 # ==============================
+PS C:\Users\k\ralvia\ralvia-ai> git check-ignore -v models/invoice_risk_model.joblib
+.gitignore:45:*.joblib  models/invoice_risk_model.joblib
+PS C:\Users\k\ralvia\ralvia-ai> 
 node_modules/
 .next/
 out/
@@ -43,6 +46,7 @@ env/
 # ML generated files
 # ==============================
 *.joblib
+!ralvia-ai/models/invoice_risk_model.joblib
 *.pkl
 
 # ==============================
