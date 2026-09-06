@@ -146,23 +146,36 @@ class AiService
         return $response->json();
     }
 
-    public function predictInvoiceRiskBatch(
-        array $invoices
-    ): array {
-        $response = Http::timeout(30)
-            ->post(
-                config('services.ai.url')
-                    . '/ml/risk/predict/batch',
-                [
-                    'invoices' => $invoices,
-                ]
-            );
+public function predictInvoiceRiskBatch(
+    array $invoices
+): array {
+    $url = rtrim(
+        config('services.ai.url'),
+        '/'
+    ) . '/ml/risk/predict/batch';
 
-        $response->throw();
+    \Log::info('Risk batch request', [
+        'url' => $url,
+        'invoice_count' => count($invoices),
+    ]);
 
-        return $response->json();
-    }
+    $response = Http::timeout(30)
+        ->post(
+            $url,
+            [
+                'invoices' => $invoices,
+            ]
+        );
 
+    \Log::info('Risk batch response', [
+        'status' => $response->status(),
+        'body' => $response->body(),
+    ]);
+
+    $response->throw();
+
+    return $response->json();
+}
     public function explainInvoiceRisk(
     array $data
     ): array {
