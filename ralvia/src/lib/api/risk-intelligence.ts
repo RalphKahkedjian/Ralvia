@@ -18,8 +18,13 @@ export async function getRiskIntelligence():
   );
 
   if (!response.ok) {
+    const errorText = await response.text();
+
+    console.error("Risk Intelligence status:", response.status);
+    console.error("Risk Intelligence response:", errorText);
+
     throw new Error(
-      "Failed to load risk intelligence"
+      `Failed to load risk intelligence: ${response.status}`
     );
   }
 
