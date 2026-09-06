@@ -10,7 +10,7 @@ export default function LogoutButton() {
     try {
       await logout();
 
-      router.push("/login");
+      router.push("/");
       router.refresh();
     } catch (error) {
       console.error(error);
