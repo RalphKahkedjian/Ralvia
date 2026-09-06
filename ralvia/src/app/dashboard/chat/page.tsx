@@ -20,16 +20,25 @@ type SpeechRecognitionEventLike = {
   };
 };
 
+type SpeechRecognitionErrorEventLike = {
+  error: string;
+  message?: string;
+};
+
+
 type SpeechRecognitionInstance = {
   lang: string;
   interimResults: boolean;
   continuous: boolean;
   onstart: (() => void) | null;
   onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  onerror: (() => void) | null;
+  onerror:
+    | ((event: SpeechRecognitionErrorEventLike) => void)
+    | null;
   onend: (() => void) | null;
   start: () => void;
 };
+
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 
@@ -401,9 +410,9 @@ export default function FinanceChat() {
       false
     );
   }
-
 function startListening() {
-  const speechWindow = window as SpeechRecognitionWindow;
+  const speechWindow =
+    window as SpeechRecognitionWindow;
 
   const SpeechRecognition =
     speechWindow.SpeechRecognition ??
@@ -419,8 +428,10 @@ function startListening() {
 
   window.speechSynthesis.cancel();
   setSpeaking(false);
+  setError("");
 
-  const recognition = new SpeechRecognition();
+  const recognition =
+    new SpeechRecognition();
 
   recognition.lang =
     language === "ar"
@@ -431,6 +442,10 @@ function startListening() {
   recognition.continuous = false;
 
   recognition.onstart = () => {
+    console.log(
+      "Speech recognition started"
+    );
+
     setListening(true);
     setError("");
   };
@@ -439,9 +454,25 @@ function startListening() {
     event: SpeechRecognitionEventLike
   ) => {
     const transcript =
-      event.results[0][0].transcript;
+      event.results?.[0]?.[0]?.transcript
+        ?.trim();
+
+    console.log(
+      "Speech transcript:",
+      transcript
+    );
 
     setListening(false);
+
+    if (!transcript) {
+      setError(
+        "No speech was detected. Please try again."
+      );
+
+      return;
+    }
+
+    setQuestion(transcript);
 
     await submitQuestion(
       transcript,
@@ -449,19 +480,78 @@ function startListening() {
     );
   };
 
-  recognition.onerror = () => {
+  recognition.onerror = (
+    event: SpeechRecognitionErrorEventLike
+  ) => {
+    console.error(
+      "Speech recognition error:",
+      event.error,
+      event.message
+    );
+
     setListening(false);
 
-    setError(
-      "Could not understand the voice input."
-    );
+    switch (event.error) {
+      case "not-allowed":
+      case "service-not-allowed":
+        setError(
+          "Microphone access was blocked. Please allow microphone access for Ralvia."
+        );
+        break;
+
+      case "audio-capture":
+        setError(
+          "No microphone was detected or the microphone could not be accessed."
+        );
+        break;
+
+      case "no-speech":
+        setError(
+          "No speech was detected. Please speak clearly and try again."
+        );
+        break;
+
+      case "network":
+        setError(
+          "Speech recognition could not connect to the speech service. Please try again."
+        );
+        break;
+
+      case "aborted":
+        setError(
+          "Voice input was cancelled."
+        );
+        break;
+
+      default:
+        setError(
+          `Voice recognition failed: ${event.error}`
+        );
+    }
   };
 
   recognition.onend = () => {
+    console.log(
+      "Speech recognition ended"
+    );
+
     setListening(false);
   };
 
-  recognition.start();
+  try {
+    recognition.start();
+  } catch (error) {
+    console.error(
+      "Could not start speech recognition:",
+      error
+    );
+
+    setListening(false);
+
+    setError(
+      "Could not start voice recognition."
+    );
+  }
 }
 
   function speakAnswer(
