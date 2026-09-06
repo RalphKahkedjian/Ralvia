@@ -14,24 +14,20 @@ class HistoricalInvoiceSeeder extends Seeder
     {
         /*
         |--------------------------------------------------------------------------
-        | 1. Get the newest user/account
+        | 1. Get Lee's deployed account
         |--------------------------------------------------------------------------
-        |
-        | Since you just created a new Ralvia account, we use the latest user
-        | and get their company.
-        |
         */
 
         $user = User::where(
-    'email',
-    'lee@gmail.com'
-)->firstOrFail();
+            'email',
+            'lee@gmail.com'
+        )->firstOrFail();
 
         $company = $user->company;
 
         if (!$company) {
             $this->command->error(
-                'The latest user does not belong to a company.'
+                'The selected user does not belong to a company.'
             );
 
             return;
@@ -84,11 +80,6 @@ class HistoricalInvoiceSeeder extends Seeder
         |--------------------------------------------------------------------------
         | 3. Define customer payment profiles
         |--------------------------------------------------------------------------
-        |
-        | Negative delay = pays before due date
-        | 0              = pays on due date
-        | Positive delay = pays after due date
-        |
         */
 
         $customerProfiles = [
@@ -123,7 +114,7 @@ class HistoricalInvoiceSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
-        | 5. Generate 24 months of historical invoices
+        | 5. Generate 24 months of historical PAID invoices
         |--------------------------------------------------------------------------
         */
 
@@ -218,10 +209,6 @@ class HistoricalInvoiceSeeder extends Seeder
                     |--------------------------------------------------------------------------
                     | Invoice number
                     |--------------------------------------------------------------------------
-                    |
-                    | Include company ID so demo data from different companies
-                    | has clearly distinguishable invoice numbers.
-                    |
                     */
 
                     $invoiceNumber =
@@ -270,8 +257,194 @@ class HistoricalInvoiceSeeder extends Seeder
             }
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | 6. Create current OVERDUE invoices
+        |--------------------------------------------------------------------------
+        |
+        | These are unpaid invoices so the dashboard,
+        | overdue counters, Action Center and Risk Intelligence
+        | have meaningful live data.
+        |
+        */
+
+        $overdueInvoices = [
+            [
+                'customer' => $averageCustomer,
+                'invoice_number' =>
+                    'LIVE-' . $company->id . '-001',
+                'amount' => 6500,
+                'issue_days_ago' => 50,
+                'due_days_ago' => 20,
+            ],
+
+            [
+                'customer' => $averageCustomer,
+                'invoice_number' =>
+                    'LIVE-' . $company->id . '-002',
+                'amount' => 7800,
+                'issue_days_ago' => 65,
+                'due_days_ago' => 35,
+            ],
+
+            [
+                'customer' => $riskyCustomer,
+                'invoice_number' =>
+                    'LIVE-' . $company->id . '-003',
+                'amount' => 9200,
+                'issue_days_ago' => 70,
+                'due_days_ago' => 40,
+            ],
+
+            [
+                'customer' => $riskyCustomer,
+                'invoice_number' =>
+                    'LIVE-' . $company->id . '-004',
+                'amount' => 11500,
+                'issue_days_ago' => 90,
+                'due_days_ago' => 60,
+            ],
+
+            [
+                'customer' => $riskyCustomer,
+                'invoice_number' =>
+                    'LIVE-' . $company->id . '-005',
+                'amount' => 12000,
+                'issue_days_ago' => 105,
+                'due_days_ago' => 75,
+            ],
+        ];
+
+        $overdueCreated = 0;
+
+        foreach ($overdueInvoices as $invoiceData) {
+            $issueDate = Carbon::now()
+                ->subDays(
+                    $invoiceData['issue_days_ago']
+                );
+
+            $dueDate = Carbon::now()
+                ->subDays(
+                    $invoiceData['due_days_ago']
+                );
+
+            Invoice::updateOrCreate(
+                [
+                    'customer_id' =>
+                        $invoiceData['customer']->id,
+
+                    'invoice_number' =>
+                        $invoiceData['invoice_number'],
+                ],
+                [
+                    'amount' =>
+                        $invoiceData['amount'],
+
+                    'issue_date' =>
+                        $issueDate,
+
+                    'due_date' =>
+                        $dueDate,
+
+                    'paid_at' =>
+                        null,
+
+                    'status' =>
+                        'overdue',
+                ]
+            );
+
+            $overdueCreated++;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 7. Create a couple of upcoming pending invoices
+        |--------------------------------------------------------------------------
+        */
+
+        $pendingInvoices = [
+            [
+                'customer' => $goodCustomer,
+                'invoice_number' =>
+                    'LIVE-' . $company->id . '-006',
+                'amount' => 6400,
+                'issue_days_ago' => 5,
+                'due_days_from_now' => 25,
+            ],
+
+            [
+                'customer' => $averageCustomer,
+                'invoice_number' =>
+                    'LIVE-' . $company->id . '-007',
+                'amount' => 7000,
+                'issue_days_ago' => 10,
+                'due_days_from_now' => 20,
+            ],
+        ];
+
+        $pendingCreated = 0;
+
+        foreach ($pendingInvoices as $invoiceData) {
+            $issueDate = Carbon::now()
+                ->subDays(
+                    $invoiceData['issue_days_ago']
+                );
+
+            $dueDate = Carbon::now()
+                ->addDays(
+                    $invoiceData['due_days_from_now']
+                );
+
+            Invoice::updateOrCreate(
+                [
+                    'customer_id' =>
+                        $invoiceData['customer']->id,
+
+                    'invoice_number' =>
+                        $invoiceData['invoice_number'],
+                ],
+                [
+                    'amount' =>
+                        $invoiceData['amount'],
+
+                    'issue_date' =>
+                        $issueDate,
+
+                    'due_date' =>
+                        $dueDate,
+
+                    'paid_at' =>
+                        null,
+
+                    'status' =>
+                        'pending',
+                ]
+            );
+
+            $pendingCreated++;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 8. Seeder summary
+        |--------------------------------------------------------------------------
+        */
+
         $this->command->info(
-            "{$created} historical invoices seeded for company {$company->name}."
+            "{$created} historical invoices seeded."
+        );
+
+        $this->command->info(
+            "{$overdueCreated} overdue invoices seeded."
+        );
+
+        $this->command->info(
+            "{$pendingCreated} pending invoices seeded."
+        );
+
+        $this->command->info(
+            "Demo data successfully seeded for company {$company->name}."
         );
     }
 }
