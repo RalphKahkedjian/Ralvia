@@ -40,7 +40,7 @@ export default function RegisterPage() {
     <main className="min-h-screen grid lg:grid-cols-2 bg-[#FBFAF8]">
       {/* Brand panel */}
       <div className="hidden lg:flex flex-col justify-between bg-[#14213D] text-white px-14 py-12">
-        <span className="font-serif text-xl tracking-tight cursor-pointer" onClick={()=> {
+        <span className="font-serif text-3xl tracking-tight cursor-pointer" onClick={()=> {
           router.push('/')
         }}>Ralvia</span>
 
